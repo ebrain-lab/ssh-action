@@ -16,13 +16,14 @@ async function run(): Promise<void> {
     core.debug(`script: ${script}`) // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
 
     const ssh = new NodeSSH()
-    core.debug(new Date().toTimeString())
 
+    core.debug('connecting')
     await ssh.connect({
       host,
       username,
       privateKey: key
     })
+    core.debug('connected')
 
     await ssh.exec(script, [], {})
 
