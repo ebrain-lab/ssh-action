@@ -1,11 +1,21 @@
-name: 'Your name here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'ssh-action'
+description: 'ssh action /w multi platform'
+author: 'okky-lab'
 inputs:
-  milliseconds: # change this
+  host:
     required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+    description: 'host'
+  username:
+    required: true
+    description: 'username'
+  key:
+    required: true
+    description: 'private key'
+  port:
+    description: 'port'
+    default: '22'
+  script:
+    description: 'script'
 runs:
   using: 'node16'
   main: 'dist/index.js'

@@ -6,19 +6,62 @@ on: # rebuild any PRs and main branch changes
       - main
       - 'releases/*'
 
+env:
+  REGISTRY: ghcr.io
+  GHCR_PACKAGE_BASE_URL: https://github.com/ebrain-lab/ssh-action/pkgs/container/ssh-action%2F
+  environment: dev
+  package: ssh-action
+
 jobs:
   build: # make sure build/ci work properly
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+          depth: 1
       - run: |
           npm install
       - run: |
           npm run all
+
   test: # make sure the action works on a clean machine without building
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v2
-      - uses: ./
+      - uses: actions/checkout@v3
         with:
-          milliseconds: 1000
+          depth: 1
+
+
+      - uses: ./
+        name: 'ssh-action whoami'
+        with:
+          host: ${{ secrets.SSH_HOST_DEV }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            whoami
+            ls -al
+
+      - uses: ./
+        name: 'ssh-action'
+        with:
+          host: ${{ secrets.SSH_HOST_DEV }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cat <<EOF > env_from_git.sh
+            export SSH_PRIVATE_KEY=/home/ubuntu/.ssh/your-key.pem
+            export SET_PROFILE=${{ env.environment }}
+            export CONTAINER_REGISTRY=${{ env.REGISTRY }}
+            export DOCKER_USER=${{ github.actor }}
+            export DOCKER_PASSWORD=${{ secrets.GITHUB_TOKEN }}
+            export DOCKER_IMAGE=${{ env.REGISTRY }}/${{ github.repository }}/${{ env.package }}-${{ env.environment }}:latest
+            export DOCKER_CONTAINER_PORT=3000
+            export DOCKER_CONTAINER_NAME=${{ env.package }}
+            export DEPLOY_LOG_FILE_NAME=~/deploy_logs/deploy_log-$(date "+%Y.%m.%d-%H.%M.%S").log
+            EOF
+            source env_from_git.sh
+            [ -d ~/deploy_logs ] || mkdir deploy_logs
+            bash deploy.sh > $DEPLOY_LOG_FILE_NAME
+            cat $DEPLOY_LOG_FILE_NAME
