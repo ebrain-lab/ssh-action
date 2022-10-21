@@ -53,15 +53,17 @@ function run() {
             core.debug(`username: ${username}`); // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
             core.debug(`port: ${port}`); // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
             core.debug(`script: ${script}`); // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
-            const ssh = new node_ssh_1.NodeSSH();
+            let ssh = new node_ssh_1.NodeSSH();
             core.debug('connecting');
-            yield ssh.connect({
+            ssh = yield ssh.connect({
                 host,
                 username,
                 privateKey: key
             });
             core.debug('connected');
-            yield ssh.exec(script, [], {});
+            const result = yield ssh.exec(script, [], {});
+            core.debug(`result: ${result}`);
+            ssh.dispose();
             // await wait(parseInt(ms, 10))
             core.debug(new Date().toTimeString());
             core.setOutput('time', new Date().toTimeString());

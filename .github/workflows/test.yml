@@ -31,6 +31,17 @@ jobs:
         with:
           depth: 1
 
+
+      - uses: ./
+        name: 'ssh-action whoami'
+        with:
+          host: ${{ secrets.SSH_HOST_DEV }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            whoami
+            ls -al
+
       - uses: ./
         name: 'ssh-action'
         with:
@@ -45,7 +56,7 @@ jobs:
             export CONTAINER_REGISTRY=${{ env.REGISTRY }}
             export DOCKER_USER=okky-dev
             export DOCKER_PASSWORD=${{ secrets.PAT }}
-            export DOCKER_IMAGE=${{ env.REGISTRY }}/ebrain-lab/okky-web-monorepo/${{ env.package }}-${{ env.environment }}:sha-ec10e22
+            export DOCKER_IMAGE=${{ env.REGISTRY }}/ebrain-lab/okky-web-monorepo/${{ env.package }}-${{ env.environment }}:latest
             export DOCKER_CONTAINER_PORT=3000
             export DOCKER_CONTAINER_NAME=${{ env.package }}
             export DEPLOY_LOG_FILE_NAME=~/deploy_logs/deploy_log-$(date "+%Y.%m.%d-%H.%M.%S").log
@@ -54,3 +65,16 @@ jobs:
             [ -d ~/deploy_logs ] || mkdir deploy_logs
             bash deploy.sh > $DEPLOY_LOG_FILE_NAME
             cat $DEPLOY_LOG_FILE_NAME
+
+      - name: Post to a Slack channel
+        uses: slackapi/slack-github-action@v1.23.0
+        with:
+          # Slack channel id, channel name, or user id to post message.
+          # See also: https://api.slack.com/methods/chat.postMessage#channels
+          channel-id: 'C03B74MPK7S'
+          # For posting a simple plain text message
+          slack-message: "ssh-action test deployment: *${{ job.status }}*\n<https://web.${{ env.environment }}.okky.co.kr| Open Browser >"
+        env:
+          # 슬랙봇에
+          # https://github.com/ebrain-lab/okky-web-monorepo/settings/secrets/actions
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
