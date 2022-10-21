@@ -1,13 +1,35 @@
 import * as core from '@actions/core'
-import {wait} from './wait'
+
+import {NodeSSH} from 'node-ssh'
 
 async function run(): Promise<void> {
   try {
-    const ms: string = core.getInput('milliseconds')
-    core.debug(`Waiting ${ms} milliseconds ...`) // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
+    const host: string = core.getInput('host')
+    const username: string = core.getInput('username')
+    const key: string = core.getInput('key')
+    const port: string = core.getInput('port')
+    const script: string = core.getInput('script')
 
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
+    core.debug(`host: ${host}`) // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
+    core.debug(`username: ${username}`) // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
+    core.debug(`port: ${port}`) // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
+    core.debug(`script: ${script}`) // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
+
+    let ssh = new NodeSSH()
+
+    core.debug('connecting')
+    ssh = await ssh.connect({
+      host,
+      username,
+      privateKey: key
+    })
+    core.debug('connected')
+
+    const result = await ssh.execCommand(script, {cwd: '/home/ubuntu'})
+    core.debug(`result: ${JSON.stringify(result, null, 2)}`)
+
+    ssh.dispose()
+    // await wait(parseInt(ms, 10))
     core.debug(new Date().toTimeString())
 
     core.setOutput('time', new Date().toTimeString())
