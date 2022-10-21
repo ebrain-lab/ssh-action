@@ -6,11 +6,19 @@ on: # rebuild any PRs and main branch changes
       - main
       - 'releases/*'
 
+env:
+  REGISTRY: ghcr.io
+  GHCR_PACKAGE_BASE_URL: https://github.com/ebrain-lab/okky-web-monorepo/pkgs/container/okky-web-monorepo%2F
+  environment: dev
+  package: okky-admin-web
+
 jobs:
   build: # make sure build/ci work properly
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+          depth: 1
       - run: |
           npm install
       - run: |
@@ -18,7 +26,26 @@ jobs:
   test: # make sure the action works on a clean machine without building
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./
         with:
-          milliseconds: 1000
+          host: ${{ secrets.SSH_HOST_DEV }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cat <<EOF > env_from_git.sh
+            export SSH_PRIVATE_KEY=/home/ubuntu/.ssh/okky-was.pem
+            export SET_PROFILE=${{ env.environment }}
+            export CONTAINER_REGISTRY=${{ env.REGISTRY }}
+            export DOCKER_USER=okky-dev
+            export DOCKER_PASSWORD=${{ secrets.PAT }}
+            export DOCKER_IMAGE=${{ env.REGISTRY }}/ebrain-lab/okky-web-monorepo/${{ env.package }}-${{ env.environment }}:latest
+            export DOCKER_CONTAINER_PORT=3000
+            export DOCKER_CONTAINER_NAME=${{ env.package }}
+            export DEPLOY_LOG_FILE_NAME=~/deploy_logs/deploy_log-$(date "+%Y.%m.%d-%H.%M.%S").log
+            EOF
+            source env_from_git.sh
+            [ -d ~/deploy_logs ] || mkdir deploy_logs
+            bash deploy.sh > $DEPLOY_LOG_FILE_NAME
+            cat $DEPLOY_LOG_FILE_NAME
