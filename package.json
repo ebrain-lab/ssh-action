@@ -29,7 +29,7 @@
     "node-ssh": "^13.0.0"
   },
   "devDependencies": {
-    "@types/node": "^18.11.3",
+    "@types/node": "^18.11.8",
     "@types/ssh2": "^1.11.6",
     "@types/ssh2-streams": "^0.1.9",
     "@typescript-eslint/parser": "^5.40.1",
