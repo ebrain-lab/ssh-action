@@ -32,7 +32,7 @@
     "@types/node": "^18.11.3",
     "@types/ssh2": "^1.11.6",
     "@types/ssh2-streams": "^0.1.9",
-    "@typescript-eslint/parser": "^5.40.1",
+    "@typescript-eslint/parser": "^5.53.0",
     "@vercel/ncc": "^0.34.0",
     "eslint": "^8.25.0",
     "eslint-plugin-github": "^4.4.0",
